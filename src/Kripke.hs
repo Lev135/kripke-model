@@ -21,5 +21,5 @@ eval model@Model{rels, propEv, worlds} f w = case f of
     where
         ev = eval model
 
-evalAll :: Model w r p -> MLFormula p r -> [Bool]
-evalAll model@Model{worlds} f = eval model f <$> worlds
+evalAll :: Model w r p -> MLFormula p r -> [w]
+evalAll model@Model{worlds} f = map fst $ filter snd $ zip worlds $ eval model f <$> worlds
