@@ -1,7 +1,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 module ModalLogic (
     Op(..), MLFormula(..),
-    (*&), (*|), (*->),
+    opFunc, (*&), (*|), (*->),
     Parser, pFormula
 ) where
 
@@ -17,6 +17,11 @@ import Data.Foldable (asum)
 
 data Op = And | Or | Impl
     deriving Eq
+
+opFunc :: Op -> Bool -> Bool -> Bool
+opFunc And  = (&&)
+opFunc Or   = (||)
+opFunc Impl = \a b -> not a || b
 
 (*&) :: MLFormula p r -> MLFormula p r -> MLFormula p r
 (*&) = BinOp And
@@ -38,9 +43,9 @@ data MLFormula p r
 deriving instance (Eq p, Eq r) => Eq (MLFormula p r)
 
 instance Show Op where
-    show And  = "/\\"
-    show Or   = "\\/"
-    show Impl = "->"
+    show And  = " /\\ "
+    show Or   = " \\/ "
+    show Impl = " -> "
 
 instance (Show p, Show r) => Show (MLFormula p r) where
     show (Prop  p)          = show p
