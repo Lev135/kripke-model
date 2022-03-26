@@ -1,7 +1,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 module ModalLogic (
     Op(..), MLFormula(..),
-    opFunc, (*&), (*|), (*->),
+    opFunc,
     Parser, pFormula
 ) where
 
@@ -11,26 +11,17 @@ import Control.Monad.Combinators.Expr
 import Data.Void (Void)
 import Data.Text(Text)
 import Text.Megaparsec.Char (char, space, string, space1)
-import Data.Functor (($>))
 import Control.Applicative (Alternative((<|>), many))
 import Data.Foldable (asum)
 
-data Op = And | Or | Impl
+data Op = And | Or | Impl | Equiv
     deriving Eq
 
 opFunc :: Op -> Bool -> Bool -> Bool
 opFunc And  = (&&)
 opFunc Or   = (||)
 opFunc Impl = \a b -> not a || b
-
-(*&) :: MLFormula p r -> MLFormula p r -> MLFormula p r
-(*&) = BinOp And
-
-(*|) :: MLFormula p r -> MLFormula p r -> MLFormula p r
-(*|) = BinOp Or
-
-(*->) :: MLFormula p r -> MLFormula p r -> MLFormula p r
-(*->) = BinOp Impl
+opFunc Equiv = (==)
 
 data MLFormula p r
     = Prop  p
@@ -43,9 +34,10 @@ data MLFormula p r
 deriving instance (Eq p, Eq r) => Eq (MLFormula p r)
 
 instance Show Op where
-    show And  = " /\\ "
-    show Or   = " \\/ "
-    show Impl = " -> "
+    show And   = " & "
+    show Or    = " | "
+    show Impl  = " -> "
+    show Equiv = " <-> "
 
 instance (Show p, Show r) => Show (MLFormula p r) where
     show (Prop  p)          = show p
@@ -76,11 +68,8 @@ pTerm pProp pRel
 
 operators :: Parser r -> [[Operator Parser (MLFormula p r)]]
 operators pRel = [
-        -- [ Prefix $ Not <$  lexeme (char '~')
-        -- , Prefix $ Box <$> lexeme (char '[' *> pRel <* char ']')
-        -- , Prefix $ Dmd <$> lexeme (char '<' *> pRel <* char '>')
-        -- ],
-        [ InfixL $ BinOp And  <$ lexeme (string "/\\")],
-        [ InfixL $ BinOp Or   <$ lexeme (string "\\/")],
-        [ InfixR $ BinOp Impl <$ lexeme (string "->")]
+        [ InfixL $ BinOp And   <$ lexeme (string "&")],
+        [ InfixL $ BinOp Or    <$ lexeme (string "|")],
+        [ InfixR $ BinOp Impl  <$ lexeme (string "->")
+        , InfixN $ BinOp Equiv <$ lexeme (string "<->")]
     ]
